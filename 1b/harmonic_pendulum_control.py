@@ -1,18 +1,19 @@
-import  numpy as np
 import  matplotlib.pyplot as plt
 from init1b import *
 from rkSolver import RK4Model
 
-def pidControl(yMes, yRef, kD, kI, kP, time):
-    [xMeas, derxMeas] = yMes
+def pidControl(yMeas, yRef, kD, kI, kP, dTimeControl, N):
+    [xMeas, derxMeas] = yMeas[-1]
     [xRef, derxRef] = yRef
-    #print(xMeas, xRef)
-    return -kP * (xMeas - xRef) - kD * (derxMeas - derxRef) - kI * (xMeas - xRef) * time
+    control = -kP * (xMeas - xRef) - kD * (derxMeas - derxRef)
+    for i in range(N):
+        control -= kI * (yMeas[i, 0] - yRef[0]) * dTimeControl
+    return control
 
-def LyapunovControl(yMes, yRef, kLl, kLd, m, g, l):
-    [xMeas, derxMeas] = yMes
+def LyapunovControl(yMeas, yRef, kLl, kLd, m, g, l):
+    [xMeas, derxMeas] = yMeas
     [xRef, derxRef] = yRef
-    return -kLl * (xMeas - xRef) - kLd * (derxMeas - derxRef) + m * g * l * np.sin(xMeas)
+    return -kLl * (xMeas - xRef) - kLd * (derxMeas - derxRef) + g / l * np.sin(xMeas)
 
 def HarmonicPendulum(y0, t, dt, yRef, dtControl, sigma, kP, kI, kD):
 
@@ -24,23 +25,22 @@ def HarmonicPendulum(y0, t, dt, yRef, dtControl, sigma, kP, kI, kD):
     if t[-1] / dtControl != timeCorrection:
         t = np.arange(0, timeCorrection * dtControl, dt)
 
+    y = np.array([np.array([0,0], dtype= float) for i in range(len(t))])
+    u = np.array([0]*len(t), dtype=float)
 
-    y = np.array([y0 for i in range(len(t))])
-    u = np.array([0]*len(t))
+    yMeas = np.array([np.array([0, 0], dtype= float) for i in range(timeCorrection)])
 
+    for i in range(1, timeCorrection + 1):
+        yMeas[i - 1] = y0 + np.random.normal(0, sigma)
 
-    yMeas = np.array([y0 for i in range(timeCorrection)])
+        tRK4 = t[stepCorrection * (i - 1): stepCorrection * i:]
+        control = LyapunovControl(yMeas[i - 1], yRef, kLl, kLd, m, g, l)
+        #control = pidControl(yMeas[:i:], yRef, kD, kI, kP, dtControl, i)
+        u[stepCorrection * (i - 1): stepCorrection * i:] = np.array([control]*stepCorrection)
+        PendulumFunctionControl = lambda x: np.array([x[1], -g / l * np.sin(x[0]) + control ])
+        y[stepCorrection * (i - 1): stepCorrection * i] = RK4Model(y0, tRK4, dt, PendulumFunctionControl)
+        y0 = y[stepCorrection * i - 1]
 
-    for i in range(0, timeCorrection):
-        yMeas[i] = y[stepCorrection * i-1] + np.random.normal(0, sigma)
-        tRK4 = t[stepCorrection * i: stepCorrection * (i + 1):]
-        control = pidControl(yMeas[i], yRef, kD, kI, kP, dtControl)
-        control += LyapunovControl(yMeas[i], yRef, kLl, kLd, m, g, l)
-        u[stepCorrection * i: stepCorrection * (i + 1):] = [control]*stepCorrection
-        PendulumFunctionControl = lambda x: np.array([x[1], -g / l * np.sin(x[0]) + control])
-        y[stepCorrection * i: stepCorrection * (i + 1)] = RK4Model(y[stepCorrection*i-1], tRK4, dt, PendulumFunctionControl)
-
-    # print(np.round(np.rad2deg(y[:, 1a])))
     alpha = np.rad2deg(y[:, 0])
     omega = y[:, 1]
 
@@ -60,7 +60,7 @@ def HarmonicPendulum(y0, t, dt, yRef, dtControl, sigma, kP, kI, kD):
     plt.plot(t, np.array([np.rad2deg(yRef[0])] * len(t)))
     plt.savefig('angle1b')
     plt.show()
-
+    #
     fig = plt.figure(figsize=(10, 5))
     plt.xlabel('t, sec')
     plt.ylabel('omega')
