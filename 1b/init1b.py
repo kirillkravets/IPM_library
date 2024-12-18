@@ -16,6 +16,6 @@ kI = 1
 kD = 1
 
 kLl = 10
-kLd = 10
+kLd = 20
 dtControl = 5 * dt
 yRef = np.array([np.deg2rad(60), 0.0])

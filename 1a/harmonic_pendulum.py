@@ -1,5 +1,3 @@
-from shutil import which
-
 import  numpy as np
 import  matplotlib.pyplot as plt
 from init1a import m, l, g, y0, t, dt, PendulumFunction, omega, alpha
