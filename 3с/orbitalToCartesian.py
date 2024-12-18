@@ -19,7 +19,6 @@ def orbitalToCartesian(a, ecc, trueAnomaly, raan, inc, aop, mu):
     rotAop = np.array([[np.cos(aop), -np.sin(aop), 0],
                        [np.sin(aop), np.cos(aop), 0],
                        [0, 0, 1]])
-
     rVecISC = rotRaan.dot(rotInc.dot(rotAop.dot(rVecOSC)))
     velVecISC = rotRaan.dot(rotInc.dot(rotAop.dot(velVecOSC)))
     return rVecISC, velVecISC
