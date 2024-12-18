@@ -37,7 +37,7 @@ def HarmonicPendulum(y0, t, dt, yRef, dtControl, sigma, kP, kI, kD):
         control = LyapunovControl(yMeas[i - 1], yRef, kLl, kLd, m, g, l)
         #control = pidControl(yMeas[:i:], yRef, kD, kI, kP, dtControl, i)
         u[stepCorrection * (i - 1): stepCorrection * i:] = np.array([control]*stepCorrection)
-        PendulumFunctionControl = lambda x: np.array([x[1], -g / l * np.sin(x[0]) + control ])
+        PendulumFunctionControl = lambda x: np.concatenate(([x[1], -g / l * np.sin(x[0]) + control ]), axis=None)
         y[stepCorrection * (i - 1): stepCorrection * i] = RK4Model(y0, tRK4, dt, PendulumFunctionControl)
         y0 = y[stepCorrection * i - 1]
 

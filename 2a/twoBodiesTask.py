@@ -1,9 +1,5 @@
-import  numpy as np
-from matplotlib.pyplot import title, savefig
-from numpy.random import laplace
-
 from rkSolver import RK4Model, RK4
-from init2b import *
+from init2a import *
 import  matplotlib.pyplot as plt
 
 def orbitalToCartesian(a, ecc, trueAnomaly):
@@ -39,20 +35,21 @@ def cartesianToOrbital(stateRV, mu):
 
     zAxis = np.array([0, 0, 1.0], dtype=float)
 
-    i = np.rad2deg(np.acos(np.dot(cVec, zAxis)/ c)) # inclination
+    inc = np.rad2deg(np.acos(np.dot(cVec, zAxis)/ c)) # inclination
     lVec = np.cross(zAxis, cVec)
 
     raan = np.rad2deg(np.arctan2(lVec[1], lVec[0])) # longitude of the ascending node
 
     clCross = np.cross(cVec, lVec)
     clVec  = clCross / np.linalg.norm(clCross)
-    lVecNorm = np.linalg.norm(lVec)
+    lVecNorm = lVec / np.linalg.norm(lVec)
 
     eccVec = 1 / mu * (np.cross(vVec, cVec) - mu * (rVec / r))
-    #aop = (np.arctan2(eccVec[1], eccVec[0]) - raan) % (2 * np.pi) if ecc > 1e-8 else None  # argument of pericenter else NaN
+    # aop = (np.arctan2(eccVec[1], eccVec[0]) - raan) % (2 * np.pi) if ecc > 1e-8 else None  # argument of pericenter else NaN
+    aop = np.rad2deg(np.arctan2(np.dot(clVec, fVec), np.dot(lVecNorm, fVec)))
     trueAnomaly = np.rad2deg((np.arccos(np.dot(eccVec/ecc, rVec/r))) % (2 * np.pi)) if ecc > 1e-8 else None
 
-    return np.array([inc, raan, a, ecc, trueAnomaly, c, f])
+    return np.array([inc, raan, a, ecc, aop, trueAnomaly, c, f])
 
 def OSCtoISC(raan, inc, aop, vectorOSC):
     rotRaan = np.array([[np.cos(raan), -np.sin(raan), 0],
@@ -92,7 +89,7 @@ orbitalElements = np.array([[0.0]*len(cartesianToOrbital(stateISC0, mu)) for i i
 for i in range(len(t)):
     orbitalElements[i] = cartesianToOrbital(stateRVarr[i], mu)
 
-orbitalTitle = ['inc', 'raan', 'a', 'ecc', 'trueAnomaly', 'c', 'f']
+orbitalTitle = ['inc', 'raan', 'a', 'ecc', 'aop', 'trueAnomaly', 'c', 'f']
 for i in range(len(orbitalTitle)):
     plt.plot(t, np.round(orbitalElements[:, i],1))
     plt.title(orbitalTitle[i] + '= func(t)')

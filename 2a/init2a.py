@@ -1,6 +1,6 @@
 import numpy as np
 
-inc = np.deg2rad(30)
+inc = np.deg2rad(40)
 raan = np.deg2rad(45)
 aop = np.deg2rad(120)
 a = 7000 # km
