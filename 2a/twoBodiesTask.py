@@ -1,4 +1,4 @@
-from rkSolver import RK4Model, RK4
+from rkSolver import RK4Model
 from init2a import *
 import  matplotlib.pyplot as plt
 
