@@ -2,7 +2,7 @@ from rkSolver import RK4Model, RK4
 from init2a import *
 import  matplotlib.pyplot as plt
 
-def orbitalToCartesian(a, ecc, trueAnomaly):
+def orbitalToCartesian(a, ecc, trueAnomaly, raan, inc, aop):
     p = a * (1 - ecc ** 2)
     r = p / (1 + ecc * np.cos(trueAnomaly))
     trueAnomalyDot = np.sqrt(p * mu) / r**2
@@ -11,7 +11,20 @@ def orbitalToCartesian(a, ecc, trueAnomaly):
     vxOSC = rDot * np.cos(trueAnomaly) - r * trueAnomalyDot * np.sin(trueAnomaly)
     vyOSC = rDot * np.sin(trueAnomaly) + r * trueAnomalyDot * np.cos(trueAnomaly)
     velVecOSC = np.array([vxOSC, vyOSC, 0])
-    return np.concatenate((rVecOSC, velVecOSC), axis=None)
+
+    rotRaan = np.array([[np.cos(raan), -np.sin(raan), 0],
+                        [np.sin(raan), np.cos(raan), 0],
+                        [0, 0, 1]])
+    rotInc = np.array([[1, 0, 0],
+                       [0, np.cos(inc), -np.sin(inc)],
+                       [0, np.sin(inc), np.cos(inc)]])
+    rotAop = np.array([[np.cos(aop), -np.sin(aop), 0],
+                       [np.sin(aop), np.cos(aop), 0],
+                       [0, 0, 1]])
+
+    rVecISC = rotRaan.dot(rotInc.dot(rotAop.dot(rVecOSC)))
+    velVecISC = rotRaan.dot(rotInc.dot(rotAop.dot(velVecOSC)))
+    return np.concatenate((rVecISC, velVecISC), axis=None)
 
 def cartesianToOrbital(stateRV, mu):
 
@@ -51,27 +64,11 @@ def cartesianToOrbital(stateRV, mu):
 
     return np.array([inc, raan, a, ecc, aop, trueAnomaly, c, f])
 
-def OSCtoISC(raan, inc, aop, vectorOSC):
-    rotRaan = np.array([[np.cos(raan), -np.sin(raan), 0],
-                      [np.sin(raan), np.cos(raan), 0],
-                      [0, 0, 1]])
-    rotInc = np.array([[1, 0, 0],
-                     [0, np.cos(inc), -np.sin(inc)],
-                     [0, np.sin(inc), np.cos(inc)]])
-    rotAop = np.array([[np.cos(aop), -np.sin(aop), 0],
-                     [np.sin(aop), np.cos(aop), 0],
-                     [0, 0, 1]])
+state0 = orbitalToCartesian(a0, ecc0, trueAnomaly0, raan0, inc0, aop0)
 
-    return rotRaan.dot(rotInc.dot(rotAop.dot(vectorOSC)))
-
-stateOSC0 = orbitalToCartesian(a, ecc, trueAnomaly)
-
-stateISC0 = np.zeros(6)
-stateISC0[0:3] = OSCtoISC(raan, inc, aop, stateOSC0[0:3])
-stateISC0[3:] = OSCtoISC(raan, inc, aop, stateOSC0[3:])
 
 twoBodyModel = lambda stateVec: np.concatenate((stateVec[3:], -mu * stateVec[0:3] / np.linalg.norm(stateVec[0:3])**3),axis=None)
-stateRVarr = RK4Model(stateISC0, t, dt, twoBodyModel)
+stateRVarr = RK4Model(state0, t, dt, twoBodyModel)
 ax = plt.figure().add_subplot(projection='3d')
 
 # Prepare arrays x, y, z
@@ -84,7 +81,7 @@ plt.savefig('3dOrbitGraph.png')
 plt.show()
 plt.close()
 
-orbitalElements = np.array([[0.0]*len(cartesianToOrbital(stateISC0, mu)) for i in  range(len(t))])
+orbitalElements = np.array([[0.0]*len(cartesianToOrbital(state0, mu)) for i in  range(len(t))])
 
 for i in range(len(t)):
     orbitalElements[i] = cartesianToOrbital(stateRVarr[i], mu)

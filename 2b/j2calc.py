@@ -1,8 +1,6 @@
-import numpy as np
-
 from init2b import *
 import matplotlib.pyplot as plt
-from rkSolver import RK4Model, RK4
+from rkSolver import RK4Model
 
 def accelerationJ2(rVec):
     [rx, ry, rz]  = rVec
@@ -15,7 +13,7 @@ def accelerationJ2(rVec):
     wCenter = - mu * rVec / r**3
     return wCenter + wJ2
 
-def orbitalToCartesian(a, ecc, trueAnomaly):
+def orbitalToCartesian(a, ecc, trueAnomaly, raan, inc, aop):
     p = a * (1 - ecc ** 2)
     r = p / (1 + ecc * np.cos(trueAnomaly))
     trueAnomalyDot = np.sqrt(p * mu) / r**2
@@ -24,7 +22,20 @@ def orbitalToCartesian(a, ecc, trueAnomaly):
     vxOSC = rDot * np.cos(trueAnomaly) - r * trueAnomalyDot * np.sin(trueAnomaly)
     vyOSC = rDot * np.sin(trueAnomaly) + r * trueAnomalyDot * np.cos(trueAnomaly)
     velVecOSC = np.array([vxOSC, vyOSC, 0])
-    return np.concatenate((rVecOSC, velVecOSC), axis=None)
+
+    rotRaan = np.array([[np.cos(raan), -np.sin(raan), 0],
+                        [np.sin(raan), np.cos(raan), 0],
+                        [0, 0, 1]])
+    rotInc = np.array([[1, 0, 0],
+                       [0, np.cos(inc), -np.sin(inc)],
+                       [0, np.sin(inc), np.cos(inc)]])
+    rotAop = np.array([[np.cos(aop), -np.sin(aop), 0],
+                       [np.sin(aop), np.cos(aop), 0],
+                       [0, 0, 1]])
+
+    rVecISC = rotRaan.dot(rotInc.dot(rotAop.dot(rVecOSC)))
+    velVecISC = rotRaan.dot(rotInc.dot(rotAop.dot(velVecOSC)))
+    return np.concatenate((rVecISC, velVecISC), axis=None)
 
 def cartesianToOrbital(stateRV, mu):
 
@@ -64,27 +75,11 @@ def cartesianToOrbital(stateRV, mu):
 
     return np.array([inc, raan, a, ecc, aop, trueAnomaly, c, f])
 
-def OSCtoISC(raan, inc, aop, vectorOSC):
-    rotRaan = np.array([[np.cos(raan), -np.sin(raan), 0],
-                      [np.sin(raan), np.cos(raan), 0],
-                      [0, 0, 1]])
-    rotInc = np.array([[1, 0, 0],
-                     [0, np.cos(inc), -np.sin(inc)],
-                     [0, np.sin(inc), np.cos(inc)]])
-    rotAop = np.array([[np.cos(aop), -np.sin(aop), 0],
-                     [np.sin(aop), np.cos(aop), 0],
-                     [0, 0, 1]])
 
-    return rotRaan.dot(rotInc.dot(rotAop.dot(vectorOSC)))
-
-stateOSC0 = orbitalToCartesian(a, ecc, trueAnomaly)
-
-stateISC0 = np.zeros(6)
-stateISC0[0:3] = OSCtoISC(raan, inc, aop, stateOSC0[0:3])
-stateISC0[3:] = OSCtoISC(raan, inc, aop, stateOSC0[3:])
+state0 = orbitalToCartesian(a0, ecc0, trueAnomaly0, raan0, inc0, aop0)
 
 twoBodyModel = lambda stateVec: np.concatenate((stateVec[3:], accelerationJ2(stateVec[0:3])),axis=None)
-stateRVarr = RK4Model(stateISC0, t, dt, twoBodyModel)
+stateRVarr = RK4Model(state0, t, dt, twoBodyModel)
 ax = plt.figure().add_subplot(projection='3d')
 
 # Prepare arrays x, y, z
@@ -97,13 +92,13 @@ plt.savefig('3dOrbitGraph.png')
 plt.show()
 plt.close()
 
-orbitalElements = np.array([[0.0]*len(cartesianToOrbital(stateISC0, mu)) for i in  range(len(t))])
+orbitalElements = np.array([[0.0]*len(cartesianToOrbital(state0, mu)) for i in  range(len(t))])
 
 for i in range(len(t)):
     orbitalElements[i] = cartesianToOrbital(stateRVarr[i], mu)
 
 orbitalTitle = ['inc', 'raan', 'a', 'ecc', 'aop', 'trueAnomaly', 'c', 'f']
-for i in range(len(orbitalTitle)):
+for i in 0, 2, 3, 5, 6, 7:
     plt.plot(t, np.round(orbitalElements[:, i],1))
     plt.title(orbitalTitle[i] + '= func(t)')
     plt.xlabel('t')
@@ -113,12 +108,12 @@ for i in range(len(orbitalTitle)):
     plt.savefig(orbitalTitle[i] + '2b.png')
     plt.close()
 
-a = orbitalElements[:, 2]
-ecc = orbitalElements[:, 3]
-inc = orbitalElements[:, 0]
+aArr = orbitalElements[:, 2]
+eccArr = orbitalElements[:, 3]
+incArr = orbitalElements[:, 0]
 
-raanDot = 3/2 * J2 * (Rearth / (a * (1 - ecc**2)))**2 * np.sqrt(mu / a**3) * np.cos(inc)
-aopDot =  -3/4 * J2 * (Rearth / (a * (1 - ecc**2)))**2 * np.sqrt(mu / a**3) * (5 * (np.cos(inc))**2 - 1)
+raanDot = 3/2 * J2 * (Rearth / (aArr * (1 - eccArr**2)))**2 * np.sqrt(mu / aArr**3) * np.cos(incArr)
+aopDot =  -3/4 * J2 * (Rearth / (aArr * (1 - eccArr**2)))**2 * np.sqrt(mu / aArr**3) * (5 * (np.cos(incArr))**2 - 1)
 
 raanAnalytical = np.zeros(len(raanDot))
 aopAnalytical  = np.zeros(len(aopDot))
@@ -131,8 +126,8 @@ titleAnalytical = ['raanTh', 'aopTh']
 y = [raanAnalytical, aopAnalytical]
 yDig = [orbitalElements[:, 1] - orbitalElements[0, 1], orbitalElements[:, 4] - orbitalElements[0, 4]]
 for i in range(len(titleAnalytical)):
-    plt.plot(t, np.rad2deg(y[i]))
-    plt.plot(t, yDig[i])
+    plt.plot(t, np.rad2deg(-y[i]))
+    plt.plot(t, -yDig[i])
     plt.title(titleAnalytical[i] + '= function(t)')
     plt.xlabel('t')
     plt.ylabel(titleAnalytical[i])
