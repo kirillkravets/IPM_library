@@ -47,6 +47,7 @@ omegaOrbBF = [quatBF[i].IF2BF(omegaOrbIF[i]) for i in range(len(t))]
 omegaRelBF = omegaBF - omegaOrbBF
 # модуль орбитальной угловой скорости
 omega0 = np.array([np.sqrt(mu / np.linalg.norm(rVecIF[i])**3) for i in range(len(t))])
+
 # орты ССК
 E1 = np.array([1, 0, 0], dtype=float)
 E2 = np.array([0, 1, 0], dtype=float)
@@ -58,9 +59,8 @@ for i in range(len(t)):
 
     JacobiIntegral[i] = (
             0.5 * np.dot(omegaRelBF[i], Jtense.dot(omegaRelBF[i])) +
-            omega0[i]**2 * (1.5 * np.dot(E3, Jtense.dot(E3)) - 0.5 * np.dot(Jtense.dot(E2), E2))
+            omega0[i]**2 * (1.5 * np.dot(E3, Jtense.dot(E3))) - 0.5 * np.dot(Jtense.dot(omegaOrbBF[i]), omegaOrbBF[i])
                         )
-
 
 kineticMoment = np.array([(np.cross(rVecIF[i], vVecIF[i]) + Jtense.dot(omegaBF[i]))  for i in range(len(t))])
 for i in range(3):
@@ -73,7 +73,7 @@ plt.grid(which="both", axis='both')
 plt.savefig('kineticMoment3c')
 plt.close()
 
-plt.plot(t, np.round(JacobiIntegral, 8))
+plt.plot(t, JacobiIntegral)
 plt.title('JacobiIntegral = func(t)')
 plt.ylabel('JacobiIntegral')
 plt.xlabel('t')
