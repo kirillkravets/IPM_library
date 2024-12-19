@@ -4,7 +4,7 @@ from quaternion import Quaternion
 
 # IF - ИСК, BF - ССК, OF - ОСК
 # переводит вектор vecIF из ИСК в ОСК
-def IFtoOF(rIF, vIF, vecIF):
+def OF2IF(rIF, vIF, vecOF):
     cVec = np.cross(rIF, vIF)  # вектор момента импульса
     # орты связанной системы координат
     e3 = rIF / np.linalg.norm(rIF)
@@ -12,7 +12,7 @@ def IFtoOF(rIF, vIF, vecIF):
     e1 = np.cross(e2, e3)
     # матрица перехода из ОСК в ИСК
     matrixOBF2IF = np.array([e1, e2, e3], dtype=float)
-    vecOF = matrixOBF2IF.dot(vecIF)
+    vecOF = matrixOBF2IF.dot(vecOF)
     return vecOF
 
 # параметры моделирования
