@@ -53,10 +53,10 @@ omegaRelBF = omegaBF - omegaOrbBF
 omega0 = np.array([np.sqrt(mu / np.linalg.norm(rVecIF[i])**3) for i in range(len(t))])
 
 # орты ОСК
-E1 = np.array([1, 0, 0], dtype=float)
+E1 = np.array([0, 0, 1], dtype=float)
 E2 = np.array([0, 1, 0], dtype=float)
 E3 = np.cross(E1, E2)
-# интеграл Якоби h = 1/2 (omegaRel, J(omegaRel)) - 1/2 * omega0**2(E2, J(E2)) + 3/2(E3, J(E3))
+# интеграл Якоби h = 1/2 (omegaRel, J(omegaRel)) - 1/2 * omega0**2[(E2BF, J(E2BF)) - 3(E3BF, J(E3BF))]
 JacobiIntegral = np.zeros(len(t))
 for i in range(len(t)):
     # радиус-вектор центра масс в ССК
@@ -66,9 +66,11 @@ for i in range(len(t)):
     # орты ОСК  в проекциях на ССК
     E3BF = quatBF[i].IF2BF(OF2IF(rVecIF[i], vVecIF[i], E3))
     E2BF = quatBF[i].IF2BF(OF2IF(rVecIF[i], vVecIF[i], E2))
-    # интеграл Якоби
-    JacobiIntegral[i] = 0.5 * (np.dot(omegaRelBF[i], Jtense.dot(omegaRelBF[i])) +
-                          omega0[i]**2 * (3 * np.dot(E3BF, Jtense.dot(E3BF)) - np.dot(Jtense.dot(E2BF), E2BF)))
+    # # интеграл Якоби
+    # JacobiIntegral[i] = 0.5 * (np.dot(omegaRelBF[i], Jtense.dot(omegaRelBF[i])) +
+    #                       omega0[i]**2 * (3 * np.dot(E3BF, Jtense.dot(E3BF)) - np.dot(Jtense.dot(E2BF), E2BF)))
+    JacobiIntegral[i] = 0.5 * (np.dot(omegaBF[i], Jtense.dot(omegaBF[i])) +
+                               omega0[i] ** 2 * 3 * np.dot(E3BF, Jtense.dot(E3BF)) - omega0[i] * np.dot(Jtense.dot(omegaBF[i]), E2BF))
 
 kineticMoment = np.array([(np.cross(rVecIF[i], vVecIF[i]) + Jtense.dot(omegaBF[i]))  for i in range(len(t))])
 for i in range(3):
