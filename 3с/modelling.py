@@ -1,7 +1,5 @@
 import matplotlib.pyplot as plt
-import numpy as np
-
-from rkSolver import RK4Model
+from rkSolver3c import RK4Model
 from init3c import *
 
 def gravMoment(rIF, Jtense, quatBF, mu):
@@ -19,6 +17,7 @@ def gravMoment(rIF, Jtense, quatBF, mu):
 # y[3:6] == vIF
 # y[6:10] == qBF.q
 # y[10:] == omegaBf
+
 gravMomentMoving = lambda y: np.array([
     # изменение радиус вектора dr_dt = v
     *y[3:6],
@@ -58,45 +57,41 @@ JacobiIntegral = np.zeros(len(t))
 for i in range(len(t)):
 
     JacobiIntegral[i] = (
-            0.5 * np.dot(omegaRelBF[i], np.dot(Jtense, omegaRelBF[i])) +
-            omega0[i]**2 * (1.5 * np.dot(E3, np.dot(Jtense, E3)) - 0.5 * np.dot(np.dot(Jtense, E2), E2))
+            0.5 * np.dot(omegaRelBF[i], Jtense.dot(omegaRelBF[i])) +
+            omega0[i]**2 * (1.5 * np.dot(E3, Jtense.dot(E3)) - 0.5 * np.dot(Jtense.dot(E2), E2))
                         )
 
 
-kineticMoment = [(np.dot(omegaOrbBF[i], Jtense.dot(omegaOrbBF[i])) / 2
-                         + np.dot(omegaRelBF[i], Jtense.dot(omegaRelBF[i])) / 2) for i in range(len(t))]
-
-plt.plot(t, kineticMoment)
+kineticMoment = np.array([(np.cross(rVecIF[i], vVecIF[i]) + Jtense.dot(omegaBF[i]))  for i in range(len(t))])
+for i in range(3):
+    plt.plot(t, kineticMoment[:, i], label = 'kin_mom_{:}'.format(i))
 plt.title('kineticMoment = func(t)')
 plt.ylabel('kineticMoment')
 plt.xlabel('t')
 plt.minorticks_on()
 plt.grid(which="both", axis='both')
-plt.show()
-plt.savefig('kineticMoment3c.png')
+plt.savefig('kineticMoment3c')
 plt.close()
 
-plt.plot(t, np.round(JacobiIntegral, 6))
+plt.plot(t, np.round(JacobiIntegral, 8))
 plt.title('JacobiIntegral = func(t)')
 plt.ylabel('JacobiIntegral')
 plt.xlabel('t')
 plt.minorticks_on()
 plt.grid(which="both", axis='both')
-plt.show()
-plt.savefig('JacobiIntegral3c.png')
+plt.savefig('JacobiIntegral3c')
 plt.close()
 
 for i in range(3):
     omega = omegaBF[:, i]
-    plt.plot(t, np.round(omega, 6), label = 'omega_{}'.format(i))
+    plt.plot(t, np.round(omega, 8), label = 'omega_{}'.format(i))
     plt.legend()
-plt.title('angle velovity = func(t)')
-plt.ylabel('angle velovity')
+plt.title('angle velocity = func(t)')
+plt.ylabel('angle velocity')
 plt.xlabel('t')
 plt.minorticks_on()
 plt.grid(which="both", axis='both')
-plt.show()
-plt.savefig('angleVelovity3c.png')
+plt.savefig("angleVelocity3c")
 plt.close()
 
 # plt.plot(t, np.round(omega0,5))
@@ -111,13 +106,13 @@ plt.close()
 # plt.close()
 #
 
-# ax = plt.figure().add_subplot(projection='3d')
-# # Prepare arrays x, y, z
-# x = rVecIF[:, 0]
-# y = rVecIF[:, 1]
-# z = rVecIF[:, 2]
-# ax.plot(x, y, z, label='parametric curve')
-# plt.legend()
-# plt.show()
-# plt.savefig('3dOrbitGraph3c.png')
-# plt.close()
+ax = plt.figure().add_subplot(projection='3d')
+# Prepare arrays x, y, z
+x = rVecIF[:, 0]
+y = rVecIF[:, 1]
+z = rVecIF[:, 2]
+ax.plot(x, y, z, label='parametric curve')
+plt.legend()
+plt.show()
+plt.savefig('3dOrbitGraph3c')
+plt.close()
