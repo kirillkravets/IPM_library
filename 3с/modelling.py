@@ -41,30 +41,30 @@ ySolution = RK4Model(phaseVec, t, dt, gravMomentMoving)
 omegaBF = ySolution[:, 10:]
 rVecIF = ySolution[:, 0:3]
 vVecIF = ySolution[:, 3:6]
-cVecIF = np.cross(rVecIF, vVecIF)
+cVecIF = [np.cross(rVecIF[i], vVecIF[i]) for i in range(len(t))]
 
 quatBF = [Quaternion(ySolution[i, 6:10]) for i in range(len(t))]
-omegaOrbIF = [cVecIF[i] / np.linalg.norm(cVecIF[i]) for i in range(len(t))]
+omegaOrbIF = [cVecIF[i] / (np.linalg.norm(rVecIF[i]))**2 for i in range(len(t))]
 omegaOrbBF = [quatBF[i].IF2BF(omegaOrbIF[i]) for i in range(len(t))]
 omegaRelBF = omegaBF - omegaOrbBF
 # модуль орбитальной угловой скорости
 omega0 = np.array([np.sqrt(mu / np.linalg.norm(rVecIF[i])**3) for i in range(len(t))])
 
 # орты ССК
-E1 = np.array([1, 0, 0], dtype=float)
-E2 = np.array([0, 1, 0], dtype=float)
-E3 = np.cross(E1, E2)
+e3 = [(rVecIF[i] / np.linalg.norm(rVecIF[i])) for i in range(len(t))]
+e2 = [(cVecIF[i] / np.linalg.norm(cVecIF[i])) for i in range(len(t))]
 
 # интеграл Якоби h = 1/2 (omegaRel, J(omegaRel)) - 1/2 * omega0**2(E2, J(E2)) + 3/2(E3, J(E3))
 JacobiIntegral = np.zeros(len(t))
 for i in range(len(t)):
-    E3BD = quatBF[i].IF2BF(E3)
-    if i < 10:
-        print(E3BD)
-    JacobiIntegral[i] = (
-            0.5 * np.dot(omegaRelBF[i], Jtense.dot(omegaRelBF[i])) +
-            omega0[i]**2 * (1.5 * np.dot(E3BD, Jtense.dot(E3BD))) - 0.5 * np.dot(Jtense.dot(omegaOrbBF[i]), omegaOrbBF[i])
-                        )
+    # радиус-вектор центра масс в ССК
+    rBF = quatBF[i].IF2BF(rVecIF[i])
+    e3BF = quatBF[i].IF2BF(e3[i])
+    e2BF = quatBF[i].IF2BF(e2[i])
+    # расстояние до центра масс
+    Rc = np.linalg.norm(rBF)
+    JacobiIntegral[i] = 0.5 * (np.dot(omegaRelBF[i], Jtense.dot(omegaRelBF[i])) +
+                          omega0[i]**2 * (3 * np.dot(e3BF, Jtense.dot(e3BF)) - np.dot(Jtense.dot(e2BF), e2BF)))
 
 kineticMoment = np.array([(np.cross(rVecIF[i], vVecIF[i]) + Jtense.dot(omegaBF[i]))  for i in range(len(t))])
 for i in range(3):
@@ -118,5 +118,4 @@ z = rVecIF[:, 2]
 ax.plot(np.round(x, 1), np.round(y,1), np.round(z, 1), label='parametric curve')
 plt.legend()
 plt.show()
-plt.savefig('3dOrbitGraph3c.jpg')
 plt.close()

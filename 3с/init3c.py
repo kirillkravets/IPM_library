@@ -16,7 +16,7 @@ def IFtoOF(rIF, vIF, vecIF):
     return vecOF
 
 # параметры моделирования
-dt = float(1.0) # шаг моделирования РК4
+dt = float(0.1) # шаг моделирования РК4
 tFinal = 1000.0 # время моделирования
 t = np.arange(0.0, tFinal, dt) # массив эпох
 
