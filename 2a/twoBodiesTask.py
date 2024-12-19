@@ -1,3 +1,5 @@
+import numpy as np
+
 from rkSolver import RK4Model
 from init2a import *
 import  matplotlib.pyplot as plt
@@ -25,6 +27,7 @@ def orbitalToCartesian(a, ecc, trueAnomaly, raan, inc, aop):
     rVecISC = rotRaan.dot(rotInc.dot(rotAop.dot(rVecOSC)))
     velVecISC = rotRaan.dot(rotInc.dot(rotAop.dot(velVecOSC)))
     return np.concatenate((rVecISC, velVecISC), axis=None)
+
 
 def cartesianToOrbital(stateRV, mu):
 
@@ -59,18 +62,19 @@ def cartesianToOrbital(stateRV, mu):
 
     eccVec = 1 / mu * (np.cross(vVec, cVec) - mu * (rVec / r))
     # aop = (np.arctan2(eccVec[1], eccVec[0]) - raan) % (2 * np.pi) if ecc > 1e-8 else None  # argument of pericenter else NaN
-    aop = np.rad2deg(np.arctan2(np.dot(clVec, fVec), np.dot(lVecNorm, fVec)))
+    aop = np.rad2deg(np.arctan2(np.dot(clVec, fVec), np.dot(lVecNorm, fVec)) - np.pi/6)
     trueAnomaly = np.rad2deg((np.arccos(np.dot(eccVec/ecc, rVec/r))) % (2 * np.pi)) if ecc > 1e-8 else None
-
+    print(aop)
     return np.array([inc, raan, a, ecc, aop, trueAnomaly, c, f])
 
-state0 = orbitalToCartesian(a0, ecc0, trueAnomaly0, raan0, inc0, aop0)
-
+state0 = orbitalToCartesian(a0, ecc0, trueAnomaly0, raan0, inc0, aop0, mu)
+cartesianToOrbital(state0, mu)
 
 twoBodyModel = lambda stateVec: np.concatenate((stateVec[3:], -mu * stateVec[0:3] / np.linalg.norm(stateVec[0:3])**3),axis=None)
 stateRVarr = RK4Model(state0, t, dt, twoBodyModel)
-ax = plt.figure().add_subplot(projection='3d')
 
+
+ax = plt.figure().add_subplot(projection='3d')
 # Prepare arrays x, y, z
 x = stateRVarr[:, 0]
 y = stateRVarr[:, 1]

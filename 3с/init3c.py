@@ -2,6 +2,8 @@ import  numpy as np
 from orbitalToCartesian import orbitalToCartesian
 from quaternion import Quaternion
 
+# IF - ИСК, BF - ССК, OF - ОСК
+# переводит вектор vecIF из ИСК в ОСК
 def IFtoOF(rIF, vIF, vecIF):
     cVec = np.cross(rIF, vIF)  # вектор момента импульса
     # орты связанной системы координат
@@ -10,39 +12,37 @@ def IFtoOF(rIF, vIF, vecIF):
     e1 = np.cross(e2, e3)
     # матрица перехода из ОСК в ИСК
     matrixOBF2IF = np.array([e1, e2, e3], dtype=float)
-    vecOF = np.dot(matrixOBF2IF, vecIF)
+    vecOF = matrixOBF2IF.dot(vecIF)
     return vecOF
 
-
+# параметры моделирования
 dt = float(1.0) # шаг моделирования РК4
 tFinal = 10000.0 # время моделирования
 t = np.arange(0.0, tFinal, dt) # массив эпох
 
+# орбитальные элементы для задания начальных данных r, v
 a0 = 7000 # большая полуось (км)
-ecc0 = 0.5 # эксцентреситет
+ecc0 = 0.0 # эксцентреситет - круговая орбита
 trueAnomaly0 = np.deg2rad(15) # истинная аномалия
 raan0 = np.deg2rad(45) # долгота восходящего узла
 inc0 = np.deg2rad(40)  # наклонение
 aop0 = np.deg2rad(120) # аргумент перицентра
-mu = 398600.4418 # km^3 / sec^2 # гравитационный параметр
+
+# гравитационный параметр
+mu = 398600.4418 # km^3 / sec^2
 
 # тензор инерции
-Jtense = np.array([[0.4, 0, 0], [0, 0.5, 0], [0, 0, 0.3]], dtype=float)
+Jtense = np.diag([3.0,4.0,2.0]) * 1e-6# кг*км^2
+
 # получаем начальные радиус-вектор и скорость в ИСО
 [rIF0, velIF0] = orbitalToCartesian(a0, ecc0, trueAnomaly0, raan0, inc0, aop0, mu)
 
-# ориентация КА относительно ОСК
+# кватернион ориентации, задаёт переход из ИСК в ССК
 # отсылается к классу Quaternion  в файле quaternion.py
-quat0 = Quaternion(np.random.normal(0, 1, 4))
+quat0 = Quaternion(np.array([1.0, 0, 0, 0], dtype= float))
 
-# начальная относительная угловая скорость в ССК задаётся случайным образом
-omegaRelBF = np.array([0.001, np.random.normal(np.pi / 90, np.pi / 900), 0.001])
-# (переносная) угловая скорость движения по орбите в начальный момент в ИСО
-omegaIForb0 = np.cross(rIF0, velIF0) / np.linalg.norm(rIF0)**2
-# (переносная) угловая скорость движения по орбите в начальный момент в ССК
-omegaBForb0 = quat0.IF2BF(omegaIForb0)
-# полная угловая скорость в ССК
-omegaBF0 = omegaBForb0 + omegaRelBF
+# полная угловая скорость в ССК в начальный момент
+omegaBF0 = np.array([0.001, 0.001, 0.001], dtype=float) # рад/с
 
 # начальный фазовый вектор [rx, ry, rx, vx, vy, vz, q0, qi, qj, qk, omega1, omega2, omega3]
 phaseVec = np.array([*rIF0, *velIF0, *quat0.q, *omegaBF0], dtype=float)

@@ -1,4 +1,6 @@
 import numpy as np
+from numpy.matrixlib.defmatrix import matrix
+
 
 def orbitalToCartesian(a, ecc, trueAnomaly, raan, inc, aop, mu):
     p = a * (1 - ecc ** 2)
@@ -19,7 +21,8 @@ def orbitalToCartesian(a, ecc, trueAnomaly, raan, inc, aop, mu):
     rotAop = np.array([[np.cos(aop), -np.sin(aop), 0],
                        [np.sin(aop), np.cos(aop), 0],
                        [0, 0, 1]])
-    rVecISC = rotRaan.dot(rotInc.dot(rotAop.dot(rVecOSC)))
-    velVecISC = rotRaan.dot(rotInc.dot(rotAop.dot(velVecOSC)))
+    rotCorrection = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]], dtype=float)
+    rVecISC = rotAop.dot(rotInc.dot(rotRaan.dot(rotCorrection.dot(rVecOSC))))
+    velVecISC =  rotAop.dot(rotInc.dot(rotRaan.dot(rotCorrection.dot(velVecOSC))))
     return rVecISC, velVecISC
 

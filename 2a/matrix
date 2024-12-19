@@ -1,0 +1,15 @@
+import numpy as np
+
+rot_psi = np.array([[np.cos(psi), -np.sin(psi), 0],
+                    [np.sin(psi), np.cos(psi), 0],
+                    [0, 0, 1]])
+rot_theta = np.array([[1, 0, 0],
+                   [0, np.cos(theta), -np.sin(theta)],
+                   [0, np.sin(theta), np.cos(theta)]])
+rot_phi = np.array([[np.cos(phi), -np.sin(phi), 0],
+                   [np.sin(phi), np.cos(phi), 0],
+                   [0, 0, 1]])
+rot_psi_t = np.transpose(rot_psi)
+rot_theta_t = np.transpose(rot_theta)
+rot_phi_t = np.transpose(rot_phi)
+rISC = rot_phi_t.dot(rot_theta_t.dot(rot_psi_t.dot(r)))

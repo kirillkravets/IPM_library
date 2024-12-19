@@ -1,8 +1,8 @@
 import numpy as np
 
-inc0 = np.deg2rad(40)
+inc0 = np.deg2rad(23)
 raan0 = np.deg2rad(45)
-aop0 = np.deg2rad(120)
+aop0 = np.deg2rad(283)
 a0 = 7000 # km
 ecc0 = 0.5
 trueAnomaly0 = np.deg2rad(15)

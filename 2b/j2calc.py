@@ -135,3 +135,4 @@ for i in range(len(titleAnalytical)):
     plt.grid(which='both', axis='both')
     plt.savefig(titleAnalytical[i] + '.png')
     plt.close()
+
