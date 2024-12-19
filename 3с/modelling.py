@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import numpy as np
+
 from rkSolver3c import RK4Model
 from init3c import *
 
@@ -56,10 +58,12 @@ E3 = np.cross(E1, E2)
 # интеграл Якоби h = 1/2 (omegaRel, J(omegaRel)) - 1/2 * omega0**2(E2, J(E2)) + 3/2(E3, J(E3))
 JacobiIntegral = np.zeros(len(t))
 for i in range(len(t)):
-
+    E3BD = quatBF[i].IF2BF(E3)
+    if i < 10:
+        print(E3BD)
     JacobiIntegral[i] = (
             0.5 * np.dot(omegaRelBF[i], Jtense.dot(omegaRelBF[i])) +
-            omega0[i]**2 * (1.5 * np.dot(E3, Jtense.dot(E3))) - 0.5 * np.dot(Jtense.dot(omegaOrbBF[i]), omegaOrbBF[i])
+            omega0[i]**2 * (1.5 * np.dot(E3BD, Jtense.dot(E3BD))) - 0.5 * np.dot(Jtense.dot(omegaOrbBF[i]), omegaOrbBF[i])
                         )
 
 kineticMoment = np.array([(np.cross(rVecIF[i], vVecIF[i]) + Jtense.dot(omegaBF[i]))  for i in range(len(t))])
@@ -111,8 +115,8 @@ ax = plt.figure().add_subplot(projection='3d')
 x = rVecIF[:, 0]
 y = rVecIF[:, 1]
 z = rVecIF[:, 2]
-ax.plot(x, y, z, label='parametric curve')
+ax.plot(np.round(x, 1), np.round(y,1), np.round(z, 1), label='parametric curve')
 plt.legend()
 plt.show()
-plt.savefig('3dOrbitGraph3c')
+plt.savefig('3dOrbitGraph3c.jpg')
 plt.close()
