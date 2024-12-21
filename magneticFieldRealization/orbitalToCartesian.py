@@ -1,6 +1,4 @@
 import numpy as np
-from numpy.matrixlib.defmatrix import matrix
-
 
 def orbitalToCartesian(a, ecc, trueAnomaly, raan, inc, aop, mu):
     p = a * (1 - ecc ** 2)

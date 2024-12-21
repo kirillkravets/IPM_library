@@ -1,6 +1,6 @@
 import  matplotlib.pyplot as plt
 from init1b import *
-from rkSolver import RK4Model
+from tools.rkSolver import RK4Model
 
 def pidControl(yMeas, yRef, integrControlPrev, kD, kI, kP, dTimeControl, N):
     [xMeas, derxMeas] = yMeas

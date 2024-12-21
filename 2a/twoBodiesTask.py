@@ -1,6 +1,4 @@
-import numpy as np
-
-from rkSolver import RK4Model
+from tools.rkSolver import RK4Model
 from init2a import *
 import  matplotlib.pyplot as plt
 

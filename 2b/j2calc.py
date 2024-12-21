@@ -1,6 +1,6 @@
 from init2b import *
 import matplotlib.pyplot as plt
-from rkSolver import RK4Model
+from tools.rkSolver import RK4Model
 
 def accelerationJ2(rVec):
     [rx, ry, rz]  = rVec
