@@ -1,5 +1,3 @@
-from turtle import Vec2D
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -40,7 +38,7 @@ def quatMulvec(quat: np.ndarray[float], vec):
 # y[10:]  == omegaBF полная угловая скорость ССК
 # звездочка перед массивом означает распаковку массива
 # *[1,2,3] <=> 1, 2, 3
-# нужно для корректного интегрирования в РК4
+# лямбда-выражение, передаваемое в РК4, в качестве функции производной фазового вектора
 gravMomentMoving = lambda y: np.array([
     # изменение радиус вектора dr_dt = v
     *y[3:6],
@@ -57,13 +55,14 @@ gravMomentMoving = lambda y: np.array([
 # интегрирование уравнений движения
 ySolution = RK4Model(phaseVec, t, dt, gravMomentMoving)
 
-# орты положения равновесия
+# орты положения равновесия ССК относительно ОСК
 E1 = np.array([0, 0, 1], dtype=float)
 E2 = np.array([0, 1, 0], dtype=float)
 E3 = np.cross(E1, E2)
 
 # интеграл Якоби h = 1/2 (omegaRel, J(omegaRel)) - 1/2 * omega0**2[(E2BF, J(E2BF)) - 3(E3BF, J(E3BF))]
 JacobiIntegral = np.zeros(len(t))
+JacobiIntegral1 = np.zeros(len(t))
 omegaRelBF = np.array([np.zeros(3) for i in range(len(t))], dtype=float)
 
 for i in range(len(t)):
@@ -85,32 +84,42 @@ for i in range(len(t)):
     # относительная угловая скорость в ССК
     omegaRelBF[i] = omegaBF - omegaOrbBF
 
-    # орты ОСК в проекциях на ССК
+    #орты ОСК в проекциях на ССК
     E2BF, E3BF = [IF2BF(OF2IF(rVecIF, vVecIF, Ei), quatBF) for Ei in [E2, E3]]
-
-    JacobiIntegral[i] = 0.5 * (
+    JacobiIntegral1[i] = 0.5 * (
         np.dot(omegaRelBF[i], Jtense.dot(omegaRelBF[i])) + omega0sqr2 * (
             -np.dot(E2BF, Jtense.dot(E2BF) + 3 * np.dot(E3BF, Jtense.dot(E3BF))))
     )
 
-plt.plot(t, JacobiIntegral)
-plt.title('JacobiIntegral = func(t)')
-plt.ylabel('JacobiIntegral')
+    JacobiIntegral[i] = 0.5 * (
+            np.dot(omegaRelBF[i], Jtense.dot(omegaRelBF[i])) + omega0sqr2 * (
+        -np.dot(E2, Jtense.dot(E2) + 3 * np.dot(E3, Jtense.dot(E3))))
+    )
+
+plt.plot(t, JacobiIntegral, label = 'with E')
+plt.plot(t, JacobiIntegral1, label = 'with EBF')
+
+plt.legend()
+plt.title('Jacobi Integral = func(t)')
+plt.ylabel('Jacobi Integral')
 plt.xlabel('t')
 plt.minorticks_on()
 plt.grid(which="both", axis='both')
 plt.savefig('graphs3c/JacobiIntegral3c')
+plt.show()
 plt.close()
 
 for i in range(3):
     omega = omegaRelBF[:, i]
-    plt.plot(t, np.round(omega, 8), label = 'omegaRel{}'.format(i))
-    plt.legend()
-plt.title('relative angle velocity = func(t)')
-plt.ylabel('angle velocity')
+    plt.plot(t, np.round(omega, 8), label = r'$\omega_{} $ rel'.format(i + 1))
+plt.plot(t, [np.linalg.norm(ySolution[i, 10:]) for i in range(len(t))], label = r'$\omega_{abs}$')
+plt.legend()
+plt.title(r'$\omega$ = func(t)')
+plt.ylabel(r'$\omega$')
 plt.xlabel('t')
 plt.minorticks_on()
 plt.grid(which="both", axis='both')
+plt.show()
 plt.savefig("graphs3c/angleVelocity3c")
 plt.close()
 
